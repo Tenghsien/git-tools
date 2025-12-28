@@ -15,7 +15,7 @@ source "$SCRIPT_DIR/lib/git_ops.sh"
 # ============================================
 # 配置区域
 # ============================================
-FILE_PATH="./tengxian_xu_tools/diff_list.txt"
+FILE_PATH="$SCRIPT_DIR/diff_list.txt"
 
 # ============================================
 # 显示使用说明
@@ -100,14 +100,21 @@ patch_diffs() {
     echo ""
     print_title "第二步：开始 patch 未合入的 diff"
 
+    # 显示未合入的 diff 列表
+    echo "未合入的 diff 列表："
+    echo "----------------------------------------"
+    mapfile -t diff_array < "$unmerged_file"
+    for diff_id in "${diff_array[@]}"; do
+        echo "  $diff_id"
+    done
+    echo "----------------------------------------"
+    echo ""
+
     # 统计patch结果
     local success=0
     local failed=0
     local failed_diffs=()
     local current=0
-
-    # 读取未合入的diff并patch
-    mapfile -t diff_array < "$unmerged_file"
 
     for diff_id in "${diff_array[@]}"; do
         ((current++))
