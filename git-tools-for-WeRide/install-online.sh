@@ -22,7 +22,7 @@ GITHUB_RAW="https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GI
 
 TOOL_NAME="git-tools"
 # 安装到当前目录
-INSTALL_DIR="$(pwd)/.git-tools"
+INSTALL_DIR="$(pwd)/.git-tools-from-tengxian"
 TEMP_DIR="/tmp/git-tools-install-$$"
 
 print_info() {
@@ -189,7 +189,7 @@ create_config_example() {
 
 CONFIG_EOF
 
-    print_success "创建配置文件: .git-tools/diff_list.txt"
+    print_success "创建配置文件: .git-tools-from-tengxian/diff_list.txt"
 }
 
 # 添加到 git exclude
@@ -205,7 +205,7 @@ add_to_git_exclude() {
     mkdir -p .git/info
     touch "$exclude_file"
 
-    local items=(".git-tools/" ".git-tools")
+    local items=(".git-tools-from-tengxian/" ".git-tools-from-tengxian")
 
     for item in "${items[@]}"; do
         if grep -qE "^${item}/?$" "$exclude_file" 2>/dev/null; then
@@ -224,19 +224,19 @@ show_completion() {
     echo -e "${GREEN}✓ Git Tools 安装成功！${NC}"
     echo ""
     echo "📦 安装位置："
-    echo "   $(pwd)/.git-tools/"
+    echo "   $(pwd)/.git-tools-from-tengxian/"
     echo ""
     echo "📝 配置文件："
-    echo "   $(pwd)/.git-tools/diff_list.txt"
+    echo "   $(pwd)/.git-tools-from-tengxian/diff_list.txt"
     echo "   直接编辑此文件，添加你的 Diff ID"
     echo ""
     echo "🚀 使用命令："
-    echo "   ./.git-tools/git-tools check   - 检查 diff 状态"
-    echo "   ./.git-tools/git-tools patch   - 应用未合入的 diff"
-    echo "   ./.git-tools/git-tools reset   - 重置到远程分支"
+    echo "   ./.git-tools-from-tengxian/git-tools check   - 检查 diff 状态"
+    echo "   ./.git-tools-from-tengxian/git-tools patch   - 应用未合入的 diff"
+    echo "   ./.git-tools-from-tengxian/git-tools reset   - 重置到远程分支"
     echo ""
     echo "💡 建议：创建别名方便使用"
-    echo "   ${BLUE}alias gt=\"$(pwd)/.git-tools/git-tools\"${NC}"
+    echo "   ${BLUE}alias gt=\"$(pwd)/.git-tools-from-tengxian/git-tools\"${NC}"
     echo "   然后可以直接用: ${BLUE}gt check${NC}"
     echo ""
 }
@@ -247,7 +247,7 @@ main() {
 
     echo "将从 GitHub 下载并安装 Git Tools"
     echo "仓库: ${GITHUB_USER}/${GITHUB_REPO}"
-    echo "安装位置: $(pwd)/.git-tools/"
+    echo "安装位置: $(pwd)/.git-tools-from-tengxian/"
     echo ""
 
     check_dependencies
