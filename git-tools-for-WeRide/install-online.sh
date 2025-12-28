@@ -15,7 +15,7 @@ NC='\033[0m'
 
 # 配置 - 修改为你的 GitHub 仓库信息
 GITHUB_USER="Tenghsien"              # 你的 GitHub 用户名
-GITHUB_REPO="git-tools-for-WeRide"   # 仓库名
+GITHUB_REPO="git-tools"              # 仓库名
 GITHUB_BRANCH="WeRide"               # 分支名
 
 GITHUB_RAW="https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}"
@@ -107,6 +107,12 @@ download_file() {
     local output=$2
 
     if [ -z "$DOWNLOAD_CMD" ]; then
+# 下载文件
+download_file() {
+    local url=$1
+    local output=$2
+
+    if [ -z "$DOWNLOAD_CMD" ]; then
         print_error "下载命令未初始化"
         return 1
     fi
@@ -118,21 +124,17 @@ download_file() {
 download_and_install() {
     print_header "下载文件"
 
-    # 创建临时目录
     mkdir -p "$TEMP_DIR/lib"
     print_info "创建临时目录: $TEMP_DIR"
 
-    # 下载主脚本
     echo "正在下载主脚本..."
     if download_file "${GITHUB_RAW}/git-tools-for-WeRide/git-tools.sh" "$TEMP_DIR/git-tools.sh"; then
         print_success "git-tools.sh 下载成功"
     else
         print_error "下载 git-tools.sh 失败"
-        echo "请检查网络连接和 GitHub 仓库地址"
         exit 1
     fi
 
-    # 下载库文件
     local lib_files=("common.sh" "diff_utils.sh" "git_ops.sh")
     for file in "${lib_files[@]}"; do
         echo "正在下载 lib/$file..."
@@ -149,10 +151,8 @@ download_and_install() {
 install_files() {
     print_header "安装文件"
 
-    # 创建安装目录
     mkdir -p "$INSTALL_DIR/lib"
 
-    # 复制文件
     cp "$TEMP_DIR/git-tools.sh" "$INSTALL_DIR/"
     chmod +x "$INSTALL_DIR/git-tools.sh"
     print_success "安装主脚本"
@@ -160,67 +160,54 @@ install_files() {
     cp "$TEMP_DIR/lib/"*.sh "$INSTALL_DIR/lib/"
     print_success "安装库文件"
 
-    # 创建启动脚本
-    cat > "$INSTALL_DIR/git-tools" << 'SCRIPT_END'
+    cat > "$INSTALL_DIR/git-tools" << 'INNER_SCRIPT'
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 exec "$SCRIPT_DIR/git-tools.sh" "$@"
-SCRIPT_END
+INNER_SCRIPT
     chmod +x "$INSTALL_DIR/git-tools"
     print_success "创建启动脚本"
 }
 
-# 创建配置示例
+# 创建配置文件（在 .git-tools 文件夹下）
 create_config_example() {
     print_header "创建配置文件"
 
-    local config_file="$(pwd)/diff_list.txt"
+    local config_file="$INSTALL_DIR/diff_list.txt"
 
-    # 如果配置文件已存在，不覆盖
     if [ -f "$config_file" ]; then
         print_info "diff_list.txt 已存在，跳过创建"
         return
     fi
 
-    # 创建配置文件
-    cat > "$config_file" << 'EOF'
+    cat > "$config_file" << 'CONFIG_EOF'
 # Diff List 配置文件
 # 每行一个 Phabricator Diff ID
 # 示例：
 # D12345
 # D12346
 
-EOF
+CONFIG_EOF
 
-    print_success "创建配置文件: diff_list.txt"
-    print_info "请编辑 diff_list.txt 添加你的 Diff ID"
+    print_success "创建配置文件: .git-tools/diff_list.txt"
 }
 
 # 添加到 git exclude
 add_to_git_exclude() {
     print_header "配置 Git 忽略"
 
-    # 检查是否在 git 仓库中
     if [ ! -d ".git" ]; then
         print_warning "不在 git 仓库中，跳过 git ignore 配置"
         return
     fi
 
     local exclude_file=".git/info/exclude"
-
-    # 确保 exclude 文件存在
     mkdir -p .git/info
     touch "$exclude_file"
 
-    # 要忽略的文件/文件夹
-    local items=(
-        ".git-tools/"
-        ".git-tools"
-        "diff_list.txt"
-    )
+    local items=(".git-tools/" ".git-tools")
 
     for item in "${items[@]}"; do
-        # 检查是否已经存在（支持多种格式）
         if grep -qE "^${item}/?$" "$exclude_file" 2>/dev/null; then
             print_info "$item 已在 git exclude 中"
         else
@@ -240,7 +227,7 @@ show_completion() {
     echo "   $(pwd)/.git-tools/"
     echo ""
     echo "📝 配置文件："
-    echo "   $(pwd)/diff_list.txt"
+    echo "   $(pwd)/.git-tools/diff_list.txt"
     echo "   直接编辑此文件，添加你的 Diff ID"
     echo ""
     echo "🚀 使用命令："
