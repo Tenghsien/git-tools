@@ -172,21 +172,28 @@ SCRIPT_END
 
 # 创建配置示例
 create_config_example() {
-    print_header "创建配置示例"
+    print_header "创建配置文件"
 
-    local example_file="$(pwd)/diff_list.txt.example"
+    local config_file="$(pwd)/diff_list.txt"
 
-    cat > "$example_file" << 'EOF'
-# Diff List 配置文件示例
+    # 如果配置文件已存在，不覆盖
+    if [ -f "$config_file" ]; then
+        print_info "diff_list.txt 已存在，跳过创建"
+        return
+    fi
+
+    # 创建配置文件
+    cat > "$config_file" << 'EOF'
+# Diff List 配置文件
 # 每行一个 Phabricator Diff ID
-# 使用时将此文件重命名为 diff_list.txt
+# 示例：
+# D12345
+# D12346
 
-D12345
-D12346
-D12347
 EOF
 
-    print_success "创建配置示例: diff_list.txt.example"
+    print_success "创建配置文件: diff_list.txt"
+    print_info "请编辑 diff_list.txt 添加你的 Diff ID"
 }
 
 # 添加到 git exclude
@@ -206,11 +213,15 @@ add_to_git_exclude() {
     touch "$exclude_file"
 
     # 要忽略的文件/文件夹
-    local items=(".git-tools/" "diff_list.txt" "diff_list.txt.example")
+    local items=(
+        ".git-tools/"
+        ".git-tools"
+        "diff_list.txt"
+    )
 
     for item in "${items[@]}"; do
-        # 检查是否已经存在
-        if grep -q "^${item}$" "$exclude_file" 2>/dev/null; then
+        # 检查是否已经存在（支持多种格式）
+        if grep -qE "^${item}/?$" "$exclude_file" 2>/dev/null; then
             print_info "$item 已在 git exclude 中"
         else
             echo "$item" >> "$exclude_file"
@@ -228,11 +239,11 @@ show_completion() {
     echo "📦 安装位置："
     echo "   $(pwd)/.git-tools/"
     echo ""
-    echo "📝 第一步：创建配置文件"
-    echo "   将 diff_list.txt.example 重命名为 diff_list.txt"
-    echo "   然后编辑添加你的 Diff ID"
+    echo "📝 配置文件："
+    echo "   $(pwd)/diff_list.txt"
+    echo "   直接编辑此文件，添加你的 Diff ID"
     echo ""
-    echo "🚀 第二步：使用命令"
+    echo "🚀 使用命令："
     echo "   ./.git-tools/git-tools check   - 检查 diff 状态"
     echo "   ./.git-tools/git-tools patch   - 应用未合入的 diff"
     echo "   ./.git-tools/git-tools reset   - 重置到远程分支"
