@@ -3,9 +3,6 @@
 # Diff 操作工具函数库
 # ============================================
 
-# 配置文件路径由主脚本传入
-# DIFF_LIST_FILE 已在 git-tools.sh 中定义为 FILE_PATH
-
 # ============================================
 # Diff 提取和解析
 # ============================================
@@ -14,11 +11,8 @@
 extract_diff_ids() {
     local file_path=$1
     cat "$file_path" |
-    sed 's/[,， ]/\n/g' |  # 把逗号(中英)、空格全换成换行
-    sed 's/^[ \t]*//;s/[ \t]*$//' |  # 去除每行首尾空格/制表符
-    grep -v '^$' |  # 过滤空行
-    sed -E 's|.*/D([0-9]+).*|D\1|' |  # 从URL中提取diff ID
-    grep -E '^D[0-9]+$'  # 只保留D开头+纯数字的格式
+    grep -oE 'D[0-9]+' |  # 提取所有 D+数字 的模式（按行顺序）
+    awk '!seen[$0]++'  # 去重但保持原始顺序
 }
 
 # ============================================
@@ -40,14 +34,14 @@ check_all_diffs() {
 
     while IFS= read -r diff_id; do
         total_count=$((total_count + 1))
-        echo "正在检查 $diff_id..."
+        echo "正在检查 $diff_id..." >&2
 
         if ! check_diff_in_branch "$diff_id"; then
-            echo -e "  ${RED}❌ $diff_id 未合入该分支${NC}"
+            echo -e "  ${RED}❌ $diff_id 未合入该分支${NC}" >&2
             echo "$diff_id" >> "$unmerged_list"
             unmerged_count=$((unmerged_count + 1))
         else
-            echo -e "  ${GREEN}✅ $diff_id 已合入${NC}"
+            echo -e "  ${GREEN}✅ $diff_id 已合入${NC}" >&2
         fi
     done < <(extract_diff_ids "$file_path")
 
