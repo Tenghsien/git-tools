@@ -3,7 +3,7 @@ set -e
 
 # ===================== 核心配置（按需修改）=====================
 # 替换为你的 git-tools 仓库 HTTPS 地址
-REPO_URL="https://github.com/Tenghsien/git-tools.git"
+REPO_URL="https://github.com/你的用户名/git-tools.git"
 # 本地目标文件夹名（取消隐藏，去掉前缀.）
 TARGET_DIR="tools-from-Tengxian"
 # 替换为你需要部署的分支名（比如 dev/test/feature 等）
@@ -79,27 +79,21 @@ main() {
     echo "🌿 部署分支：$DEPLOY_BRANCH"
     echo ""
 
-    # 5. 自动创建全局命令
-    echo "正在创建全局命令..."
-    if sudo ln -sf "$PWD/$TARGET_DIR/git-tools" /usr/local/bin/git-tools; then
-        green "全局命令创建成功！"
-        echo ""
-        echo "现在可以在任何目录直接使用以下命令："
-        echo "  git-tools check   # 检查 diff 状态"
-        echo "  git-tools patch   # 应用未合入的 diff"
-        echo "  git-tools reset   # 强制同步远程代码"
-    else
-        red "创建全局命令失败"
-        echo ""
-        echo "请手动执行以下命令创建全局命令："
-        echo "  sudo ln -sf $PWD/$TARGET_DIR/git-tools /usr/local/bin/git-tools"
-        echo ""
-        echo "或者直接使用本地命令："
-        echo "  cd $TARGET_DIR"
-        echo "  ./git-tools check   # 检查 diff 状态"
-        echo "  ./git-tools patch   # 应用未合入的 diff"
-        echo "  ./git-tools reset   # 强制同步远程代码"
-    fi
+    # 5. 提示创建全局命令（不自动执行，避免管道中 sudo 交互问题）
+    echo "📌 推荐：创建全局命令以便在任何目录使用"
+    echo "----------------------------------------"
+    echo "请复制并执行以下命令："
+    echo ""
+    echo -e "\033[1;31m  sudo ln -sf $PWD/$TARGET_DIR/git-tools /usr/local/bin/git-tools\033[0m"
+    echo ""
+    echo "创建后，可以在任何目录直接使用："
+    echo "  git-tools check   # 检查 diff 状态"
+    echo "  git-tools patch   # 应用未合入的 diff"
+    echo "  git-tools reset   # 强制同步远程代码"
+    echo ""
+    yellow "如果不创建全局命令，也可以进入目录使用："
+    echo "  cd $TARGET_DIR"
+    echo "  ./git-tools check"
     echo ""
 }
 
