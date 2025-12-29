@@ -4,8 +4,8 @@
 # 统一的 diff 管理工具
 # ============================================
 
-# 获取脚本所在目录
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 获取脚本所在目录（支持软链接）
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 # 加载库文件
 source "$SCRIPT_DIR/lib/common.sh"
@@ -15,7 +15,7 @@ source "$SCRIPT_DIR/lib/git_ops.sh"
 # ============================================
 # 配置区域
 # ============================================
-FILE_PATH="./tengxian_xu_tools/diff_list.txt"
+FILE_PATH="$SCRIPT_DIR/diff_list.txt"
 
 # ============================================
 # 显示使用说明
@@ -46,6 +46,55 @@ check_diffs() {
 
     # 打印统计结果
     print_check_summary "$total" "$unmerged" "$result_file"
+
+    # 如果有未合入的 diff，询问用户是否要 patch
+    if [ $unmerged -gt 0 ]; then
+        echo ""
+        echo -n "是否要将这些未合入的 diff patch 到当前分支？(y/n): "
+        read -r answer
+
+        if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
+            echo ""
+            print_title "开始 patch 未合入的 diff"
+
+            # 统计patch结果
+            local success=0
+            local failed=0
+            local failed_diffs=()
+            local current=0
+
+            # 读取未合入的diff并patch
+            mapfile -t diff_array < "$result_file"
+
+            for diff_id in "${diff_array[@]}"; do
+                ((current++))
+                print_separator
+                echo "[$current/$unmerged] 正在 patch: $diff_id"
+                print_separator
+
+                # 执行 patch
+                if patch_single_diff "$diff_id"; then
+                    echo ""
+                    print_success "$diff_id 应用成功"
+                    ((success++))
+                else
+                    echo ""
+                    print_error "$diff_id 应用失败（可能有冲突）"
+                    ((failed++))
+                    failed_diffs+=("$diff_id")
+                    # 清理失败的patch痕迹
+                    cleanup_failed_patch
+                fi
+                echo ""
+            done
+
+            # 输出统计
+            print_patch_summary "$unmerged" "$success" "$failed" "${failed_diffs[@]}"
+        else
+            echo ""
+            print_success "已取消 patch 操作"
+        fi
+    fi
 
     # 清理临时文件
     cleanup_temp_files "$result_file" "${result_file}.total" "${result_file}.unmerged"
@@ -88,6 +137,16 @@ patch_diffs() {
     print_separator
     echo "检查完成！共检查 $total_count 个 diff"
     echo -e "${RED}有 $unmerged_count 个 diff 未合入${NC}"
+
+    # 显示未合入的 diff 列表
+    if [ -f "$unmerged_file" ]; then
+        echo ""
+        echo "需要 patch 的 diff 列表："
+        echo "----------------------------------------"
+        while IFS= read -r diff_id; do
+            echo "  $diff_id"
+        done < "$unmerged_file"
+    fi
     print_separator
 
     # 如果没有未合入的diff，直接返回
